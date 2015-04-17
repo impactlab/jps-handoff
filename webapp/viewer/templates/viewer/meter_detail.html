@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% load bootstrap3 %}
+{% load static from staticfiles %}
+{% block content %}
+
+<script src="{% static 'js/d3.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/micropolar.js' %}" type="text/javascript"></script>
+<script src="{% static 'js/amiplots.js' %}" type="text/javascript"></script>
+<script type="text/javascript">
+$(function() {
+  $("#addgroup").autocomplete({
+    source: "/viewer/api/get_groups/",
+    minLength: 2,
+  });
+});
+</script>
+
+<div class="row">
+  <div class="col-md-10 col-md-offset-1">
+    <div class="panel panel-default">
+    <div class="panel-heading">
+    Groups 
+    </div>
+    <div class="panel-body">
+    {% for g in meter.metergroups.all %}
+      <div class="alert alert-info" role="alert">
+        {{ g.name }} 
+        <a href="{{ request.path }}?rmgroup={{g.name}}" class="alert-link">(remove)</a>
+      </div>
+    {% endfor %}
+    <div class="ui-widget">
+      <form method="get" action="{{ request.path }}">
+        <label for="addgroup">Add group: </label>
+        <input id="addgroup" name="addgroup">
+        <input type="submit" value="Submit"/>
+      </form>
+    </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-10 col-md-offset-1">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        Recent AMI data for {{ meter.meter_id }}
+      </div>
+      <div class="panel-body">
+        <div id="recent-preview-graph"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-10 col-md-offset-1">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        AMI heatmap for {{ meter.meter_id }}
+      </div>
+      <div class="panel-body">
+        <div id="ami-heatmap"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-10 col-md-offset-1">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        Measurement and diagnostic data for {{ meter.meter_id }}
+      </div>
+      <div class="panel-body">
+        <div class="row">
+          <div style="float:left">
+            <div id="phasor-graph"></div>
+          </div>
+          <div style="float:left">
+            <table class="table table-bordered">
+              <tr>
+                <th> Phase </th>
+                <th> A </th>
+                <th> B </th>
+                <th> C </th>
+              <tr>
+                <th> Power Factor </th>
+                <td> {{meas_diag_data.pf_a|floatformat:3}} </td>
+                <td> {{meas_diag_data.pf_b|floatformat:3}} </td>
+                <td> {{meas_diag_data.pf_c|floatformat:3}} </td>
+              </tr>
+              <tr>
+                <th> Voltage </th>
+                <td> {{meas_diag_data.phase_a_voltage|floatformat:3}} </td>
+                <td> {{meas_diag_data.phase_b_voltage|floatformat:3}} </td>
+                <td> {{meas_diag_data.phase_c_voltage|floatformat:3}} </td>
+              </tr>
+              <tr>
+                <th> Voltage Angle </th>
+                <td> - </td>
+                <td> {{meas_diag_data.phase_b_voltage_angle|floatformat:3}} </td>
+                <td> {{meas_diag_data.phase_c_voltage_angle|floatformat:3}} </td>
+              </tr>
+              <tr>
+                <th> Current </th>
+                <td> {{meas_diag_data.phase_a_current|floatformat:3}} </td>
+                <td> {{meas_diag_data.phase_b_current|floatformat:3}} </td>
+                <td> {{meas_diag_data.phase_c_current|floatformat:3}} </td>
+              </tr>
+              <tr>
+                <th> Current Angle </th>
+                <td> {{meas_diag_data.phase_a_current_angle|floatformat:3}} </td>
+                <td> {{meas_diag_data.phase_b_current_angle|floatformat:3}} </td>
+                <td> {{meas_diag_data.phase_c_current_angle|floatformat:3}} </td>
+              </tr>
+            </table>
+            <table class="table table-bordered">
+              Diagnostic Flags
+              <tr>
+                <td> Cross Phase Flow </td>
+                <td> {{meas_diag_data.cross_phase_flow}} </td>
+              </tr>
+              <tr>
+                <td> Voltage Deviation </td>
+                <td> {{meas_diag_data.voltage_deviation}} </td>
+              </tr>
+              <tr>
+                <td> Inactive Phase </td>
+                <td> {{meas_diag_data.inactive_phase}} </td>
+              </tr>
+              <tr>
+                <td> Phase Angle Displacement </td>
+                <td> {{meas_diag_data.phase_angle_displacement}} </td>
+              </tr>
+              <tr>
+                <td> Current Waveform Distorsion </td>
+                <td> {{meas_diag_data.current_waveform_distorsion}} </td>
+              </tr>
+            </table>
+            <table class="table table-bordered">
+              Error Flags
+              <tr>
+                <td> Low Battery </td>
+                <td> {{meas_diag_data.low_battery_error}} </td>
+              </tr>
+              <tr>
+                <td> Mass Memory </td>
+                <td> {{meas_diag_data.mass_memory_error}} </td>
+              </tr>
+              <tr>
+                <td> Phase Loss </td>
+                <td> {{meas_diag_data.phase_loss_error}} </td>
+              </tr>
+              <tr>
+                <td> Reverse Power Flow </td>
+                <td> {{meas_diag_data.reverse_power_flow_error}} </td>
+              </tr>
+              <tr>
+                <td> Site Scan </td>
+                <td> {{meas_diag_data.site_scan_error}} </td>
+              </tr>
+              <tr>
+                <td> TOU Schedule </td>
+                <td> {{meas_diag_data.tou_schedule_error}} </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-10 col-md-offset-1">
+    <div class="btn-group" role="group">
+      <a href="{% url "download_meter" id=meter.id %}" class="btn btn-default">Download as CSV</a>
+    </div>
+  </div>
+</div>
+
+<script>
+var heatmap_data = {{ ami_heatmap_data|safe}};
+var recent_data = {{ recent_preview_data|safe }};
+var events_data = {{ events_data|safe }};
+var meas_data = {{ meas_diag_data|safe }};
+
+
+config =  {data: [{t: [0], 
+                   r: [meas_data["phase_a_voltage"]/meas_data["max_voltage"]], 
+                   geometry: µ.DOT, name: 'Voltage A', dotType:"triangle-down", 
+                   dotSize: 35, opacity: 0.8, color:"red"},
+                  {t: [meas_data["phase_a_current_angle"]], 
+                   r: [meas_data["phase_a_current"]/meas_data["max_current"]], 
+                   geometry: µ.DOT, name: 'Current A', dotType:"cross", 
+                   dotSize: 35, opacity: 0.8, color:"red"},
+                  {t: [meas_data["phase_b_voltage_angle"]], 
+                   r: [meas_data["phase_b_voltage"]/meas_data["max_voltage"]], 
+                   geometry: µ.DOT, name: 'Voltage B', dotType:"triangle-down",
+                   dotSize: 35, opacity: 0.8, color:"green"},
+                  {t: [meas_data["phase_b_current_angle"]], 
+                   r: [meas_data["phase_b_current"]/meas_data["max_current"]], 
+                   geometry: µ.DOT, name: 'Current B', dotType:"cross", 
+                   dotSize: 35, opacity: 0.8, color:"green"},
+                  {t: [meas_data["phase_c_voltage_angle"]], 
+                   r: [meas_data["phase_c_voltage"]/meas_data["max_voltage"]], 
+                   geometry: µ.DOT, name: 'Voltage C', dotType:"triangle-down",
+                   dotSize: 35, opacity: 0.8, color:"blue"},
+                  {t: [meas_data["phase_c_current_angle"]], 
+                   r: [meas_data["phase_c_current"]/meas_data["max_current"]], 
+                   geometry: µ.DOT, name: 'Current C', dotType:"cross", 
+                   dotSize: 35, opacity: 0.8, color: "blue"}],
+          layout: {title: 'Phasor Diagram', 
+                   margin: {top: 0, bottom: 0, left: 5, right: 40}, 
+                   angularAxis: {ticksCount: 3, visible: true, ticksSuffix:"°"},
+                   radialAxis: {visible: true}, 
+                   width:400, height:400}};
+
+    micropolar.Axis().config(config).render(d3.select('#phasor-graph'));
+    heatmap = createHeatMap("#ami-heatmap",heatmap_data,900,400);
+    createBrushAreaChart("#recent-preview-graph",recent_data,
+      events_data,900,550);
+
+</script>
+{% endblock %}

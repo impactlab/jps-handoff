@@ -1,0 +1,31 @@
+svg {
+  font: 10px helvetica;
+}
+
+.area {
+  fill: steelblue;
+  clip-path: url(#clip);
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.tooltip {
+  position:absolute;
+  width: 400px;
+  height: 28px;
+  pointer-events: none;
+}
+
+.brush .extent {
+  fill-opacity: .125;
+  shape-rendering: crispEdges;
+}
+
+.label {
+  font: 11px helvetica;
+}

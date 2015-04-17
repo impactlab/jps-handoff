@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% load bootstrap3 %}
+{% load django_tables2 %}
+
+{% block title %}JPS Large Accounts Viewer{% endblock %}
+
+{% block content %}
+  <div class="container-fluid">
+   <div class="jumbotron">
+      <div class="container">
+          <h1>JPS Large Accounts Viewer</h1>
+    </div> <!-- /.container -->
+  </div> <!-- /.jumbotron -->
+  <div class="container">
+    <div class="row">
+      <div class="col-md-9">
+        <h3> Meters </h3>
+        {% if request.GET.q %}
+          <div class="alert alert-info" role="alert">
+            Searched for ID {{ request.GET.q }}.
+            <a href="{% url 'home' %}" class="alert-link">(clear)</a>
+          </div>
+        {% endif %}
+        {% if request.GET.g %}
+          <div class="alert alert-info" role="alert">
+            Searched for group {{ request.GET.g }}.
+            <a href="{% url 'home' %}" class="alert-link">(clear)</a>
+          </div>
+        {% endif %}
+        <form action="{% url 'auditlist' %}" method="post">{% csrf_token %}
+          {% include "table.html" %}
+          <div class="btn-group" role="group">
+            <input class="btn btn-default" type="submit" value="Update audit list"/>
+            <a href="{% url "download_auditlist" %}" class="btn btn-default" >Download audit list</a>
+            <a href="{% url "clear_auditlist" %}" class="btn btn-default" >Clear audit list</a>
+            <a href="{% url "download_summary" %}" class="btn btn-default" >Download summary</a>
+          </div>
+          <br/><br/>
+        </form>
+      </div>
+      <div class="col-md-3">
+        <h3> Search </h3>
+        <h4> By Meter ID </h4>
+        <form method="get" action="{% url 'home' %}"> 
+           <input type="text" name="q" id="id_q"/>
+           <input type="submit" value="Submit"/>
+        </form>
+        <h4> By Group </h4>
+        <form method="get" action="{% url 'home' %}"> 
+           <input type="text" name="g" id="id_g"/>
+           <input type="submit" value="Submit"/>
+        </form>
+      </div> 
+    </div>
+  </div> <!-- /.container -->
+{% endblock content %}
