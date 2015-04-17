@@ -1,0 +1,88 @@
+NON-TECHNICAL LOSS DETECTION IN LARGE COMMERCIAL ACCOUNTS
+-------------------------------------------------------------
+Developed for Jamaica Public Service (JPS) by The Impact Lab,
+facilitated by The World Bank. See LICENSE file.
+-------------------------------------------------------------
+
+CONTENTS
+
+1. Introduction
+2. Setup
+3. Running the code
+
+-------------------------------------------------------------
+
+1. Introduction
+
+This repository contains Python code for extracting AMI data from
+the ServiewCom web portal, training a Random Forest model based on
+historical audit results, and calculating risk scores based on that
+model. 
+
+-------------------------------------------------------------
+
+2. Setup
+
+This code is intended to be run on a Microsoft Windows machine within the JPS
+virtual private network, though it can readily be adapted to run on Linux or any
+other platform with a Python interpreter.
+
+A. Setting up the network drive
+	 Within the JPS network, make sure the Z drive is mapped to 
+\\jps-amiprod2. This is where the code will expect to find the ServiewCom AMI 
+data dumps, and will store its own saved AMI data.
+
+B. Installing Python
+	This code relies on the Python 2.7 interpreter as well as several
+packages such as scikit-learn, pandas, and BeautifulSoup. The easiest way to
+meet these requirements on a Windows machine is to download and install the
+free Anaconda Scientific Python distribution:
+	https://store.continuum.io/cshop/anaconda
+
+C. Setting up your Python environment
+	Once Anaconda is installed, go to the Start menu and select
+"Anaconda Command Prompt." Issue the following commands:
+	conda create -n jps
+	activate jps
+	conda install pip 
+		(proceed? y)
+	conda install numpy
+	conda install scipy
+	conda install pandas
+	conda install matplotlib
+	pip install scikit-learn
+	pip install mechanize
+	pip install BeautifulSoup
+	pip install six
+
+	Now your Python environment is all set up. In the future, you
+can simply go to the Anaconda Command Prompt and issue the command
+	activate jps
+to have access to all of the packages you have installed.
+
+-------------------------------------------------------------
+
+3. Running the code
+
+All Python scripts can be run from the Anaconda Command Prompt after
+issuing the "active jps" command. Simply navigate to the appropriate
+directory and type "python <<COMMAND NAME>>" where <<COMMAND NAME>> 
+is build_model.py, generate_features.py, etc.
+
+The work flow is as follows:
+
+	* Assemble a list of historical audit results, including meter ID
+          and loss-impacting status. An example file is included.
+	* Assemble a full list of meters for which you would like to calculate 
+	  risk scores. Again, an example file is included.
+	* Run the svc_dump_invest.py script to extract the AMI data for the
+	  historical audits.
+	* Run "generate_features.py --train" to turn the AMI data into features 
+          for the Random Forest model.
+	* Run build_model.py to train and store the model.
+	* Run svc_dump_recent.py to extract the recent AMI data for all meters.
+        * Run "generate_features.py" to turn the recent AMI data into features
+          for prediction.
+	* Run generate_predictions.py to use the stored model and extracted
+	  data to generate a CSV file of risk scores.
+
