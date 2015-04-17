@@ -1,7 +1,7 @@
 #!/bin/bash
 
-datadir=/data/extract
-meters=$(cat /data/labels/meter_list.csv | sed 's/,/\n/g')
+datadir=/data/nightly_extract
+meters=$(cat meter_list.csv | sed 's/,/\n/g')
 
 for meter in $meters ; do 
   profile_file=$(ls $datadir/${meter}__* | head -1)

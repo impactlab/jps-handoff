@@ -1,0 +1,3 @@
+These files are intended to extract customer information
+and meter <-> premise mapping from the Oracle CIS database.
+They are very simple and should seldom need to be run.

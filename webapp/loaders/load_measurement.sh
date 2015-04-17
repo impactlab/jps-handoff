@@ -1,7 +1,6 @@
 #!/bin/bash
 
-datadir=/data/measurement/
-measurement_file=$datadir/measurement.csv
+measurement_file=measurement.csv
 dos2unix $measurement_file
 
 python ../jps/manage.py shell <<EOF

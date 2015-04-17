@@ -1,0 +1,30 @@
+This file contains four scripts, each of which extracts some useful
+data from ServiewCom. All expect to be run from within the Python 
+environment described in ../models/README, i.e. they expect to have
+some of the packages listed in the repository's requirements.txt file.
+
+1. meterlist_scraper.py
+	This is a useful and fast script that simply extracts a list
+of all the meters tracked by ServiewCom. It puts the output in
+meter_list.csv. Run it by typing "python meterlist_scraper.py". 
+
+2. measurement_scraper.py
+	This script extracts the most recent measurement and diagnostic
+data for all of the meters in meter_list.csv (so you'll have to run
+the previous scraper first!). It takes several minutes to run and outputs
+the results in one CSV file called measurement.csv. This data can be
+imported into the webapp using ../webapp/loaders/load_measurement.sh.
+(Note that it's not a python script, so don't include "python" on the command
+line.)
+
+3. profile_event_scraper.py
+	This long-running script extracts the AMI profile and event data
+for the meters in meter_list.csv. You can edit the first few lines to adjust
+the number of days of data extracted; by default, it gets the most recent
+365 days of profile data and 30 days of event data for each meter. Expect
+it to take at least a full day to run if you're getting this much data for
+every meter.
+
+4. profile_event_scraper_nightly.py
+	This script is a slight modification of the above that is intended
+to be run nightly and imported into the webapp using ../webapp/loaders/bulk_load.sh.
