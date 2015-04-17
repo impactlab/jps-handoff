@@ -29,7 +29,8 @@ other platform with a Python interpreter.
 
 A. Setting up the network drive
 	 Within the JPS network, make sure the Z drive is mapped to 
-\\jps-amiprod2. This is where the code will expect to find the ServiewCom AMI 
+\\jps-amiprod2, or edit the script and change the lines which specify
+the SVC mount point. This is where the code will expect to find the ServiewCom AMI 
 data dumps, and will store its own saved AMI data.
 
 B. Installing Python
@@ -39,7 +40,7 @@ meet these requirements on a Windows machine is to download and install the
 free Anaconda Scientific Python distribution:
 	https://store.continuum.io/cshop/anaconda
 
-C. Setting up your Python environment
+C. Setting up your Python environment on Windows
 	Once Anaconda is installed, go to the Start menu and select
 "Anaconda Command Prompt." Issue the following commands:
 	conda create -n jps
@@ -65,16 +66,16 @@ to have access to all of the packages you have installed.
 3. Running the code
 
 All Python scripts can be run from the Anaconda Command Prompt after
-issuing the "active jps" command. Simply navigate to the appropriate
+issuing the "activate jps" command. Simply navigate to the appropriate
 directory and type "python <<COMMAND NAME>>" where <<COMMAND NAME>> 
 is build_model.py, generate_features.py, etc.
 
 The work flow is as follows:
 
 	* Assemble a list of historical audit results, including meter ID
-          and loss-impacting status. An example file is included.
+          and loss-impacting status. An example file is included (subsample.csv).
 	* Assemble a full list of meters for which you would like to calculate 
-	  risk scores. Again, an example file is included.
+	  risk scores. Again, an example file is included (meter_list.csv).
 	* Run the svc_dump_invest.py script to extract the AMI data for the
 	  historical audits.
 	* Run "generate_features.py --train" to turn the AMI data into features 
