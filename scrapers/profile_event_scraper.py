@@ -9,9 +9,9 @@ from bs4 import BeautifulSoup
 svc_domain = r'http://jps-amiprod2.jps.net:9090/'
 user_name = os.environ.get('SVC_USER')
 user_pass = os.environ.get('SVC_PASS')
-output_directory = 'c:\\Users\\tplagge\\Documents\\data\\'
+output_directory = '/data/extract/'
 local_svc_mountpoint = 'z:\\'
-svc_subdir = 'tplagge_test'
+svc_subdir = 'impactlab'
 local_pathsep = '\\'
 
 meter_list = []

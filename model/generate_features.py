@@ -4,8 +4,9 @@ import pandas as pd
 import datetime, time, csv, sys, os, fnmatch
 
 # DATA DIRECTORY (important!)
-#data_dir = 'Z:\\impactlab\\'
-train_data_dir = '/data/year_profile_month_evt/'
+# For Windows, if you haven't moved the files from the ServiewCom share: 
+# train_data_dir = 'Z:\\impactlab\\'
+train_data_dir = '/data/training/'
 predict_data_dir = '/data/extract/'
 
 data_dir = predict_data_dir

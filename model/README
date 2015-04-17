@@ -23,24 +23,28 @@ model.
 
 2. Setup
 
-This code is intended to be run on a Microsoft Windows machine within the JPS
-virtual private network, though it can readily be adapted to run on Linux or any
+This code is intended to be run on a Microsoft Windows or Linux machine within 
+the JPS virtual private network, though it can readily be adapted to run on any
 other platform with a Python interpreter.
 
 A. Setting up the network drive
-	 Within the JPS network, make sure the Z drive is mapped to 
-\\jps-amiprod2, or edit the script and change the lines which specify
-the SVC mount point. This is where the code will expect to find the ServiewCom AMI 
-data dumps, and will store its own saved AMI data.
+	 If you are planning to retrain the model, you'll need to extract historical
+data from ServiewCom. Within the JPS network, make sure the \\jps-amiprod2 Windows share is
+mapped to the Z drive (on Windows) or to a directory accessible to you (on Linux).
+Edit the scraper script (svc_dump_invest.py) and change line 9 to specify the SVC 
+mount point. This is where the code will expect to find the ServiewCom AMI 
+data dumps, and will store its own saved AMI data. If you are running on a Linux machine,
+change the local_pathsep variable on line 11 of the script from '\\' to '/'.
 
 B. Installing Python
 	This code relies on the Python 2.7 interpreter as well as several
-packages such as scikit-learn, pandas, and BeautifulSoup. The easiest way to
-meet these requirements on a Windows machine is to download and install the
-free Anaconda Scientific Python distribution:
+packages such as scikit-learn, pandas, and BeautifulSoup. 
+
+B1. Windows 
+	The easiest way to meet these requirements on a Windows machine is 
+to download and install the free Anaconda Scientific Python distribution:
 	https://store.continuum.io/cshop/anaconda
 
-C. Setting up your Python environment on Windows
 	Once Anaconda is installed, go to the Start menu and select
 "Anaconda Command Prompt." Issue the following commands:
 	conda create -n jps
@@ -51,39 +55,124 @@ C. Setting up your Python environment on Windows
 	conda install scipy
 	conda install pandas
 	conda install matplotlib
-	pip install scikit-learn
-	pip install mechanize
-	pip install BeautifulSoup
-	pip install six
 
 	Now your Python environment is all set up. In the future, you
 can simply go to the Anaconda Command Prompt and issue the command
 	activate jps
 to have access to all of the packages you have installed.
 
+B2. Linux
+	First, you'll need to ask your system administrator to
+install a few system-wide packages as the root user:
+	sudo yum install git
+	sudo yum install gcc
+	sudo yum install gcc-c++
+	sudo yum install python-devel
+	sudo yum install scipy
+	sudo easy_install pip
+
+	Now you'll need to create a virtual environment. In your
+home directory, do:
+	curl -O https://pypi.python.org/packages/source/v/virtualenv/virtualenv-12.1.1.tar.gz
+	tar xzf virtualenv-12.1.1.tar.gz
+	python virtualenv-12.1.1/virtualenv.py --system-site-packages jps
+	source ~/jps/bin/activate
+
+	Now go to the root directory of this repository and type:
+	pip install -r requirements.txt
+
+	Now your Python environment is all set up. In the future, you
+can simply go to the Anaconda Command Prompt and issue the command
+	source ~/jps/bin/activate
+to have access to all of the packages you have installed.
+
 -------------------------------------------------------------
 
 3. Running the code
 
-All Python scripts can be run from the Anaconda Command Prompt after
-issuing the "activate jps" command. Simply navigate to the appropriate
-directory and type "python <<COMMAND NAME>>" where <<COMMAND NAME>> 
-is build_model.py, generate_features.py, etc.
+	All Python scripts can be run from the command prompt after
+activating your virtual environment. (In Windows, this means starting
+up the Anaconda Command Prompt from the Start menu and typing "activate jps";
+in Linux, open up a shell and type "source ~/jps/bin/activate".)
+	For example, to generate predictions, you would type
+	python generate_predictions.py
 
-The work flow is as follows:
+3A. Training the Model
+	Training should only be necessary very rarely. The model has already
+been trained on historical audit results, and only needs to be trained again
+if performance is getting worse and/or behavior of customers seems to be changing.
 
 	* Assemble a list of historical audit results, including meter ID
-          and loss-impacting status. An example file is included (subsample.csv).
-	* Assemble a full list of meters for which you would like to calculate 
-	  risk scores. Again, an example file is included (meter_list.csv).
+and loss-impacting status. An example file is included (subsample.csv).
+All of this data is included in the Large Accounts Access database;
+it is simply the investigation, irregularityid, and description tables
+joined together. At the Impact Lab, since we did not have a running version
+of Microsoft Access, we imported the data into PostgreSQL and ran the 
+following query:
+	SELECT A.*, B.*, C.*
+		FROM investigation A
+		LEFT JOIN irregularity B
+		ON A.irregularityid = B.irregularityid
+		LEFT JOIN lossimpacting C
+		ON B.irregdescription = C.description
+		WHERE C.lossimpacting IS NOT NULL
+	The same idea applies within Microsoft Access. Dump the output of
+this query into a comma separated value (CSV) file called testtrain_labels.csv,
+and put it in this directory. 
+
 	* Run the svc_dump_invest.py script to extract the AMI data for the
-	  historical audits.
-	* Run "generate_features.py --train" to turn the AMI data into features 
-          for the Random Forest model.
-	* Run build_model.py to train and store the model.
-	* Run svc_dump_recent.py to extract the recent AMI data for all meters.
+historical audits by typing "python svc_dump_invest.py". Be sure to check this
+script in a text editor to make sure the mount point for ServiewCom is correct.
+This will take some time to run--possibly a long time. We usually let it go 
+overnight.
+	Once it's done, the ServiewCom shared directory should be full of data
+files for your subsample of meters. You may wish to move them to a local drive.
+
+	* Run "python generate_features.py --train" to turn the AMI data into features 
+for the Random Forest model. Again, be sure to check this script in a text editor
+to make sure you're pointing to the data directory where the ServiewCom scraper
+output lives. It's specified on line 9 of the script.
+	If this command is successful, you should see a second csv file called
+testtrain_features.csv in this directory.
+
+	* Run "python build_model.py" to train and store the model based on the features
+and labels you just assembled.
+
+3B. Using the model to make predictions
+	* Assemble a full list of meters for which you would like to calculate 
+risk scores. An example file is included (meter_list.csv). If you'd like to 
+predict for every meter in ServiewCom, use the "meterlist_scraper.py" script
+in the "scrapers/" subdirectory of this repository to generate it automatically
+("python ../scrapers/meterlist_scraper.py").
+
+	* Assemble the raw data. If you are running the Impact Lab's web
+application, you can use the "mysql_dump_recent.py" or "postgres_dump_recent.py"
+scripts (depending on which database is powering the web application) to
+use the data that the web app has already scraped. If not, you'll need to scrape
+it from ServiewCom using the "profile_event_scraper.py" script in the
+"scrapers/" subdirectory of this repository, and it will take considerably longer
+(possibly even more than a day). 
+	Make sure that whichever script you use to extract this data, that it 
+is being dumped into a directory that you have access to and that has enough 
+space for the files. (It will be several GB.) For the database dump scripts, the
+relevant parameter is on line 5. For the ServiewCom scraper, you'll need to check
+all of the parameters between lines 9 and 15 to make sure the output directory
+is correct, and that the ServiewCom host/username/login and mount point also match
+your configuration.
+
         * Run "generate_features.py" to turn the recent AMI data into features
-          for prediction.
+for prediction. Be sure not to pass in the "--train" option, or it will try to
+use the training dataset, not the one you just extracted. Take a look at line
+10 of the script to make sure that the script is pointed to the directory where
+your data from the previous step is stored.
+
 	* Run generate_predictions.py to use the stored model and extracted
-	  data to generate a CSV file of risk scores.
+data to generate a CSV file of risk scores. The output will go into a file
+called "predictions.csv", which you can open in Excel.
+
+	* (OPTIONAL) If you are running the Impact Lab web application, you 
+can update the predictions in the app by running the 
+"webapp/loaders/load_predictions.sh" script in this repository. Note that 
+this is not a Python script--just run it from the command line:
+	../webapp/loaders/load_predictions.sh
 

@@ -3,7 +3,7 @@ python ../jps/manage.py shell <<EOF
 import csv
 from viewer import models
 
-with open('../handoff/predictions.csv','r') as f:
+with open('predictions.csv','r') as f:
   fcsv = csv.reader(f)
   for row in fcsv:
     meter_id = row[0]
