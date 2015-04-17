@@ -44,6 +44,31 @@ $(function() {
   <div class="col-md-10 col-md-offset-1">
     <div class="panel panel-default">
       <div class="panel-heading">
+        Account
+      </div>
+      <div class="panel-body">
+        {% for a in meter.account.all %}
+          <table class="table table-bordered">
+            <tr>
+              <td> Name </td>
+              <td> {{a.first_name}} {{a.middle_name}} {{a.last_name}} </td>
+            </tr>
+            <tr>
+              <td> Customer code </td>
+              <td> {{a.cust_code}} </td>
+            </tr>
+          </table>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="row">
+  <div class="col-md-10 col-md-offset-1">
+    <div class="panel panel-default">
+      <div class="panel-heading">
         Recent AMI data for {{ meter.meter_id }}
       </div>
       <div class="panel-body">
