@@ -94,6 +94,7 @@ sudo service nginx restart
 4. Collect static files
 cd /home/$USER/jps-handoff/webapp
 python manage.py collectstatic
+sudo chcon -Rt httpd_sys_content_t /home/$USER/jps-handoff/webapp/static
 
 5. Set up uWSGI
 cd /home/$USER/jps-handoff/webapp
