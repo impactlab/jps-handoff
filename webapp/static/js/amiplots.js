@@ -61,7 +61,7 @@ function createHeatMap(id,data,w,h) {
     })
     .style("stroke","none")
     .append("svg:title")
-    .text(function(d) { return d.reading + " kW"; });
+    .text(function(d) { return d.reading + " kWh"; });
 
   heatmap.append("g")
     .attr("class", "x axis")
@@ -228,7 +228,7 @@ function createBrushAreaChart(id,data,evtdata,w,h) {
     .attr("y", 15)
     .attr("x", -10)
     .attr("transform", "rotate(-90)")
-    .text("Profile (kW)");
+    .text("Profile (kWh)");
 
   context.append("path")
     .datum(data)

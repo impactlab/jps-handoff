@@ -29,7 +29,7 @@ class Meter(models.Model):
       start_date = tslast - datetime.timedelta(days=30)
     raw = [i for i in reversed(self.profile_points.\
            filter(ts__gte=start_date).order_by('-ts'))]
-    s = pd.Series([i.kw for i in raw], index=[i.ts for i in raw])
+    s = pd.Series([i.kwh for i in raw], index=[i.ts for i in raw])
     s = s.resample('60T').dropna()
     self.total_usage = int(s.sum())
 
@@ -53,15 +53,15 @@ class Meter(models.Model):
               try: 
                 dp = ProfileDataPoint.objects.get(\
                   meter=self, ts=ts, \
-                  kw=float(line[2]), kva=float(line[3]))
+                  kwh=float(line[2]), kva=float(line[3]))
               except:
                 ProfileDataPoint.objects.create(\
                   meter=self, ts=ts, \
-                  kw=float(line[2]), kva=float(line[3]))
+                  kwh=float(line[2]), kva=float(line[3]))
             else:
               ProfileDataPoint.objects.create(\
                 meter=self, ts=ts, \
-                kw=float(line[2]), kva=float(line[3]))
+                kwh=float(line[2]), kva=float(line[3]))
             linecount = linecount + 1
     return True if linecount > 0 else False
 
@@ -295,7 +295,7 @@ class Meter(models.Model):
       tslast = self.profile_points.order_by('-ts')[0].ts
       start_date = tslast - datetime.timedelta(days=30)
     if fmt=='json':
-      data = [{'date': i.ts.strftime('%Y-%m-%d %H:%M'), 'reading': i.kw}
+      data = [{'date': i.ts.strftime('%Y-%m-%d %H:%M'), 'reading': i.kwh}
               for i in reversed(\
                 self.profile_points.filter(ts__gte=start_date).\
                 order_by('-ts'))] 
@@ -303,14 +303,14 @@ class Meter(models.Model):
     elif fmt=='json-grid':
       raw = [i for i in reversed(self.profile_points.\
              filter(ts__gte=start_date).order_by('-ts'))]
-      s = pd.Series([i.kw for i in raw], index=[i.ts for i in raw])
+      s = pd.Series([i.kwh for i in raw], index=[i.ts for i in raw])
       data = [{'date': d.strftime('%Y-%m-%d'), 
                'time': d.strftime('%H:%M'),
                'reading': v} for d,v in \
                s.resample('15T').dropna().iteritems()]
       return json.dumps(data)
     elif fmt=='csv':
-      data = [[i.ts.strftime('%Y-%m-%d %H:%M'), i.kw, i.kva] \
+      data = [[i.ts.strftime('%Y-%m-%d %H:%M'), i.kwh, i.kva] \
               for i in reversed(\
                 self.profile_points.filter(ts__gte=start_date).\
                 order_by('-ts'))] 
@@ -374,7 +374,7 @@ class MeterTable(tables.Table):
     return '%5.2f' % (record.overall_score,)
 
   def render_total_usage(self, record):
-    return '{:,.0f} kWh'.format(record.total_usage)
+    return '{:,.0f} kWh'.format(record.total_usage/1000.0)
 
   def render_groups(self, record):
     retval = ''

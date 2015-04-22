@@ -17,7 +17,7 @@ class EventDataPoint(models.Model):
 class ProfileDataPoint(models.Model):
   meter = models.ForeignKey('Meter', related_name='profile_points')
   ts = models.DateTimeField()
-  kw = models.FloatField()
+  kwh = models.FloatField()
   kva = models.FloatField() 
 
 class MeasurementDataPoint(models.Model):
