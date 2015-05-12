@@ -12,6 +12,7 @@ import numpy as np
 from datapoints import ProfileDataPoint, EventDataPoint, MeasurementDataPoint
 from metergroup import MeterGroup
 from account import Account
+import pyodbc, os
 
 class Meter(models.Model):
   meter_id = models.CharField(max_length=32)
@@ -38,6 +39,39 @@ class Meter(models.Model):
 
   def get_absolute_url(self):
     return reverse('detail', kwargs={'id': self.id})
+
+  def _load_data_mv90(self, turbo=False):
+    tz = pytz.timezone('America/Jamaica')
+    con = pyodbc.connect(servername='mv90', user=os.environ['MV90_USER'],
+      password=os.environ['MV90_PASS'], driver='FreeTDS', database='MR-Auxillary')
+    cur = con.cursor()
+    multiplier = 1.0
+    for row in cur.execute('SELECT MULTIPLIER FROM METER_MULTIPLIER WHERE METER=?', (self.meter_id,)):
+      multiplier = float(row[0])
+    con = pyodbc.connect(servername='mv90', user=os.environ['MV90_USER'],
+      password=os.environ['MV90_PASS'], driver='FreeTDS', database='mv90db')
+    cur = con.cursor()
+    linecount = 0
+    for row in cur.execute("SELECT * FROM utsProfile WHERE p_mtrid=?", 
+      (self.meter_id,)):
+      if row[1]!=1: continue
+      ts = datetime.datetime.strptime(row[2], '%Y%m%d%H%M')
+      ts = ts.replace(tzinfo=tz)
+      if not turbo:
+        try: 
+          dp = ProfileDataPoint.objects.get(\
+            meter=self, ts=ts)
+        except:
+          ProfileDataPoint.objects.create(\
+            meter=self, ts=ts, \
+            kwh=float(row[3])*multiplier, kva=0)
+      else:
+          ProfileDataPoint.objects.create(\
+            meter=self, ts=ts, \
+            kwh=float(row[3])*multiplier, kva=0)
+      linecount = linecount + 1
+    return True if linecount > 0 else False
+       
 
   def _load_data(self, dir='/data/extract', turbo=False):
     tz = pytz.timezone('America/Jamaica')
