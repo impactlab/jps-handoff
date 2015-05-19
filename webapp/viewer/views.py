@@ -107,7 +107,7 @@ def download_meter(request, id):
   response['Content-Disposition'] = 'attachment; filename="'+m.meter_id+'.csv"'
   f = csv.writer(response)
   f.writerow(['Profile'])
-  f.writerow(['time','kw','kva'])
+  f.writerow(['time','kwh','raw'])
   for row in m.format_ami_data(fmt='csv'):
     f.writerow(row)
   f.writerow([''])

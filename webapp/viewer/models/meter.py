@@ -40,23 +40,32 @@ class Meter(models.Model):
   def get_absolute_url(self):
     return reverse('detail', kwargs={'id': self.id})
 
-  def _load_data_mv90(self, turbo=False):
+  def _load_data_mv90(self, turbo=False, ndays=None):
     tz = pytz.timezone('America/Jamaica')
+    tzutc = pytz.timezone('UTC')
     con = pyodbc.connect(servername='mv90', user=os.environ['MV90_USER'],
       password=os.environ['MV90_PASS'], driver='FreeTDS', database='MR-Auxillary')
     cur = con.cursor()
     multiplier = 1.0
+
     for row in cur.execute('SELECT MULTIPLIER FROM METER_MULTIPLIER WHERE METER=?', (self.meter_id,)):
       multiplier = float(row[0])
     con = pyodbc.connect(servername='mv90', user=os.environ['MV90_USER'],
       password=os.environ['MV90_PASS'], driver='FreeTDS', database='mv90db')
     cur = con.cursor()
     linecount = 0
-    for row in cur.execute("SELECT * FROM utsProfile WHERE p_mtrid=?", 
-      (self.meter_id,)):
+    if ndays is None:
+      cur.execute("SELECT * FROM utsProfile WHERE p_mtrid=?", 
+      (self.meter_id,))
+    else:
+      d = datetime.datetime.now() - datetime.timedelta(days=ndays)
+      cur.execute("SELECT * FROM utsProfile WHERE p_mtrid=? AND p_dtm > ?", 
+      (self.meter_id,int(datetime.datetime.strftime(d,'%Y%m%d0000'))))
+    for row in cur:
       if row[1]!=1: continue
       ts = datetime.datetime.strptime(row[2], '%Y%m%d%H%M')
-      ts = ts.replace(tzinfo=tz)
+      ts = ts.replace(tzinfo=tzutc)
+      ts = ts.astimezone(tz)
       if not turbo:
         try: 
           dp = ProfileDataPoint.objects.get(\
@@ -64,11 +73,11 @@ class Meter(models.Model):
         except:
           ProfileDataPoint.objects.create(\
             meter=self, ts=ts, \
-            kwh=float(row[3])*multiplier, kva=0)
+            kwh=float(row[3])*multiplier*.0658750031288964, raw=float(row[3])*1000)
       else:
           ProfileDataPoint.objects.create(\
             meter=self, ts=ts, \
-            kwh=float(row[3])*multiplier, kva=0)
+            kwh=float(row[3])*multiplier*.0658750031288964, raw=float(row[3])*1000)
       linecount = linecount + 1
     return True if linecount > 0 else False
        
@@ -87,15 +96,15 @@ class Meter(models.Model):
               try: 
                 dp = ProfileDataPoint.objects.get(\
                   meter=self, ts=ts, \
-                  kwh=float(line[2]), kva=float(line[3]))
+                  kwh=float(line[2]), raw=float(line[2]))
               except:
                 ProfileDataPoint.objects.create(\
                   meter=self, ts=ts, \
-                  kwh=float(line[2]), kva=float(line[3]))
+                  kwh=float(line[2]), raw=float(line[2]))
             else:
               ProfileDataPoint.objects.create(\
                 meter=self, ts=ts, \
-                kwh=float(line[2]), kva=float(line[3]))
+                kwh=float(line[2]), raw=float(line[2]))
             linecount = linecount + 1
     return True if linecount > 0 else False
 
@@ -176,6 +185,51 @@ class Meter(models.Model):
           a.save()
           return True
       return False
+
+  def _load_measurement_data_mv90(self):
+    con = pyodbc.connect(servername='mv90', user=os.environ['MV90_USER'],
+      password=os.environ['MV90_PASS'], driver='FreeTDS', database='MR-Auxillary')
+    cur = con.cursor()
+    cur.execute('SELECT TOP 1 * FROM MeterExtras WHERE MeterNumber=? ORDER BY ReadingTime DESC',
+      (self.meter_id,))
+    d = cur.fetchall()
+    if len(d)==0: return
+    d = d[0]
+    ts = datetime.datetime.strptime(d[3].split('.')[0], '%Y-%m-%d %H:%M:%S')
+    tz = pytz.timezone('America/Jamaica')
+    tzutc = pytz.timezone('UTC')
+    ts = ts.replace(tzinfo=tzutc)
+    ts = ts.astimezone(tz)
+    try: 
+      dp = MeasurementDataPoint.objects.get(\
+        meter=self, ts=ts)
+    except:
+      dp = MeasurementDataPoint(\
+        meter=self, ts=ts)
+    [Id, RecordSource, MeterNumber, ReadingTime, demandInterval, numberOfDemandResets, demandResetDateTime, numberOfPwrOutages, dateTimeLastPwrOutage, numberOfTimesProgrammed, dateLastProgrammed, diagnostic1, diagnostic2, diagnostic3, diagnostic4, diagnostic5, diagnostic6, diag5PhaseA, diag5PhaseB, diag5PhaseC, CSphaseAInstVolts, CSphaseBInstVolts, CSphaseCInstVolts, CSphaseAInstAmps, CSphaseBInstAmps, CSphaseCInstAmps, voltageAnglePhaseB, voltageAnglePhaseC, currentAnglePhaseA, currentAnglePhaseB, currentAnglePhaseC] = d
+    dp.phase_a_voltage = CSphaseAInstVolts
+    dp.phase_b_voltage = CSphaseBInstVolts
+    dp.phase_c_voltage = CSphaseCInstVolts
+    dp.phase_a_current = CSphaseAInstAmps
+    dp.phase_b_current = CSphaseBInstAmps
+    dp.phase_c_current = CSphaseCInstAmps
+    dp.phase_a_current_angle = currentAnglePhaseA
+    dp.phase_b_current_angle = currentAnglePhaseB
+    dp.phase_c_current_angle = currentAnglePhaseC
+    dp.phase_b_voltage_angle = voltageAnglePhaseB
+    dp.phase_c_voltage_angle = voltageAnglePhaseC
+
+    dp.demand_reset_count = numberOfDemandResets
+    dp.power_outage_count = numberOfPwrOutages
+    dp.diag_count_1 = diagnostic1 
+    dp.diag_count_2 = diagnostic2
+    dp.diag_count_3 = diagnostic3 
+    dp.diag_count_4 = diagnostic4 
+    dp.diag_count_5 = diagnostic5
+    dp.diag_5_phase_a_count = diag5PhaseA
+    dp.diag_5_phase_b_count = diag5PhaseB
+    dp.diag_5_phase_c_count = diag5PhaseC
+    dp.save()
 
   def _load_measurement_data(self, filename):
     with open(filename, 'r') as myf:
@@ -344,7 +398,7 @@ class Meter(models.Model):
                s.resample('15T').dropna().iteritems()]
       return json.dumps(data)
     elif fmt=='csv':
-      data = [[i.ts.strftime('%Y-%m-%d %H:%M'), i.kwh, i.kva] \
+      data = [[i.ts.strftime('%Y-%m-%d %H:%M'), i.kwh, i.raw] \
               for i in reversed(\
                 self.profile_points.filter(ts__gte=start_date).\
                 order_by('-ts'))] 
@@ -416,3 +470,37 @@ class MeterTable(tables.Table):
       retval = retval + i.name + ', '
     if retval == '': return retval
     return retval[:-2]
+
+def update_meter_list():
+  con = pyodbc.connect(servername='mv90', user=os.environ['MV90_USER'],
+    password=os.environ['MV90_PASS'], driver='FreeTDS', database='mv90db')
+  cur = con.cursor()
+  cur.execute('SELECT * FROM utsChannel')
+  mydict = cur.fetchall()
+  cur.execute('SELECT * FROM utsCustmer')
+  for row in cur:
+    cust = row[0]
+    meter = [i[0] for i in mydict if i[1]==cust]
+    if len(meter)==0: continue
+    meter = meter[0]
+    account = row[1]
+    name = row[3]
+    cycle = row[4]
+    rate = row[5]
+    tou = row[6]
+    addr = row[7]+', '+row[8]+', '+row[9]
+    try:
+      m = Meter.objects.get(meter_id=meter)
+    except:
+      m = Meter.objects.create(meter_id=meter)
+    try:
+      a = Account.objects.get(meter=m)
+    except:
+      a = Account.objects.create(meter=m)
+    a.account = account
+    a.name = name
+    a.cycle = cycle
+    a.rate = rate
+    a.tou = tou
+    a.addr = addr
+    a.save()

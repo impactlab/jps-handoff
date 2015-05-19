@@ -3,14 +3,16 @@
 {% load static from staticfiles %}
 {% block content %}
 
-<script src="{% static 'js/d3.js' %}" type="text/javascript"></script>
+    <!--[if gte IE 9]><!-->
 <script src="{% static 'js/micropolar.js' %}" type="text/javascript"></script>
+    <!--<![endif]-->
+
 <script src="{% static 'js/amiplots.js' %}" type="text/javascript"></script>
 <script type="text/javascript">
 $(function() {
   $("#addgroup").autocomplete({
     source: "/viewer/api/get_groups/",
-    minLength: 2,
+    minLength: 2
   });
 });
 </script>
@@ -51,11 +53,23 @@ $(function() {
           <table class="table table-bordered">
             <tr>
               <td> Name </td>
-              <td> {{a.first_name}} {{a.middle_name}} {{a.last_name}} </td>
+              <td> {{a.name}} </td>
             </tr>
             <tr>
-              <td> Customer code </td>
-              <td> {{a.cust_code}} </td>
+              <td> Account number </td>
+              <td> {{a.account}} </td>
+            </tr>
+            <tr>
+              <td> Cycle </td>
+              <td> {{a.cycle}} </td>
+            </tr>
+            <tr>
+              <td> Rate </td>
+              <td> {{a.rate}} </td>
+            </tr>
+            <tr>
+              <td> Address </td>
+              <td> {{a.addr}} </td>
             </tr>
           </table>
         {% endfor %}
@@ -210,7 +224,11 @@ var recent_data = {{ recent_preview_data|safe }};
 var events_data = {{ events_data|safe }};
 var meas_data = {{ meas_diag_data|safe }};
 
+</script>
 
+    <!--[if gte IE 9]><!-->
+
+<script>
 config =  {data: [{t: [0], 
                    r: [meas_data["phase_a_voltage"]/meas_data["max_voltage"]], 
                    geometry: µ.DOT, name: 'Voltage A', dotType:"triangle-down", 
@@ -245,6 +263,7 @@ config =  {data: [{t: [0],
     heatmap = createHeatMap("#ami-heatmap",heatmap_data,900,400);
     createBrushAreaChart("#recent-preview-graph",recent_data,
       events_data,900,550);
-
 </script>
+    <!--<![endif]-->
+
 {% endblock %}
