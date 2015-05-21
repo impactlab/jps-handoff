@@ -87,3 +87,4 @@ class MeasurementDataPoint(models.Model):
   service_type_detected = models.IntegerField(null=True)
   diag_count_1 = models.IntegerField()
   diag_count_5 = models.IntegerField()
+  diag_count_6 = models.IntegerField(null=True)

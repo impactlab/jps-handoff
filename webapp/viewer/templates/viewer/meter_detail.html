@@ -169,53 +169,30 @@ $(function() {
               </tr>
             </table>
             <table class="table table-bordered">
-              Diagnostic Flags
+              Diagnostic Counts
               <tr>
-                <td> Cross Phase Flow </td>
-                <td> {{meas_diag_data.cross_phase_flow}} </td>
+                <td> Polarity, Cross Phase and Energy Flow Check </td>
+                <td> {{meas_diag_data.diag_count_1}} </td>
               </tr>
               <tr>
-                <td> Voltage Deviation </td>
-                <td> {{meas_diag_data.voltage_deviation}} </td>
+                <td> Phase Voltage Deviation </td>
+                <td> {{meas_diag_data.diag_count_2}} </td>
               </tr>
               <tr>
-                <td> Inactive Phase </td>
-                <td> {{meas_diag_data.inactive_phase}} </td>
+                <td> Inactive Phase Current </td>
+                <td> {{meas_diag_data.diag_count_3}} </td>
               </tr>
               <tr>
                 <td> Phase Angle Displacement </td>
-                <td> {{meas_diag_data.phase_angle_displacement}} </td>
+                <td> {{meas_diag_data.diag_count_4}} </td>
               </tr>
               <tr>
                 <td> Current Waveform Distorsion </td>
-                <td> {{meas_diag_data.current_waveform_distorsion}} </td>
-              </tr>
-            </table>
-            <table class="table table-bordered">
-              Error Flags
-              <tr>
-                <td> Low Battery </td>
-                <td> {{meas_diag_data.low_battery_error}} </td>
+                <td> {{meas_diag_data.diag_count_5}} </td>
               </tr>
               <tr>
-                <td> Mass Memory </td>
-                <td> {{meas_diag_data.mass_memory_error}} </td>
-              </tr>
-              <tr>
-                <td> Phase Loss </td>
-                <td> {{meas_diag_data.phase_loss_error}} </td>
-              </tr>
-              <tr>
-                <td> Reverse Power Flow </td>
-                <td> {{meas_diag_data.reverse_power_flow_error}} </td>
-              </tr>
-              <tr>
-                <td> Site Scan </td>
-                <td> {{meas_diag_data.site_scan_error}} </td>
-              </tr>
-              <tr>
-                <td> TOU Schedule </td>
-                <td> {{meas_diag_data.tou_schedule_error}} </td>
+                <td> Total Harmonic Distortion Voltage and Current </td>
+                <td> {{meas_diag_data.diag_count_6}} </td>
               </tr>
             </table>
           </div>

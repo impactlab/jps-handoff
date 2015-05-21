@@ -229,6 +229,7 @@ class Meter(models.Model):
     dp.diag_count_3 = diagnostic3 
     dp.diag_count_4 = diagnostic4 
     dp.diag_count_5 = diagnostic5
+    dp.diag_count_6 = diagnostic6
     dp.diag_5_phase_a_count = diag5PhaseA
     dp.diag_5_phase_b_count = diag5PhaseB
     dp.diag_5_phase_c_count = diag5PhaseC
@@ -365,6 +366,12 @@ class Meter(models.Model):
              'reverse_power_flow_error': str(mp.reverse_power_flow_error),
              'site_scan_error': str(mp.site_scan_error),
              'tou_schedule_error': str(mp.tou_schedule_error),
+             'diag_count_1': str(mp.diag_count_1),
+             'diag_count_2': str(mp.diag_count_2),
+             'diag_count_3': str(mp.diag_count_3),
+             'diag_count_4': str(mp.diag_count_4),
+             'diag_count_5': str(mp.diag_count_5),
+             'diag_count_6': str(mp.diag_count_6),
     }
     
 
@@ -410,7 +417,10 @@ class Meter(models.Model):
 
   def format_event_data(self, start_date=None, fmt='json'):
     if start_date is None:
-      tslast = self.profile_points.order_by('-ts')[0].ts
+      ts = self.profile_points.order_by('-ts')
+      tslast = datetime.datetime.now()
+      if len(ts)>0: 
+        tslast = ts[0].ts
       start_date = tslast - datetime.timedelta(days=30)
     if fmt=='json':
       data = [{'date': i.ts.strftime('%Y-%m-%d %H:%M'), 'event': i.event}
@@ -421,7 +431,7 @@ class Meter(models.Model):
     if fmt=='json-grid':
       raw = [i for i in reversed(self.events.\
              filter(ts__gte=start_date).order_by('-ts'))]
-      vals = [0,] + [1 for i in raw] + [0,]
+      vals = [None,] + [1 for i in raw] + [None,]
       idxs = [start_date,] + [i.ts for i in raw] + [tslast,]
       s = pd.Series(vals, index=idxs)
       s = s.resample('15T', how='sum')
@@ -467,7 +477,7 @@ class MeterTable(tables.Table):
     return '%5.2f' % (record.overall_score,)
 
   def render_total_usage(self, record):
-    return '{:,.0f} kWh'.format(record.total_usage/1000.0)
+    return '{:,.0f} kWh'.format(record.total_usage)
 
   def render_groups(self, record):
     retval = ''
