@@ -96,7 +96,7 @@ $(function() {
   <div class="col-md-10 col-md-offset-1">
     <div class="panel panel-default">
       <div class="panel-heading">
-        AMI heatmap for {{ meter.meter_id }}
+        Profile heatmap for {{ meter.meter_id }}
       </div>
       <div class="panel-body">
         <div id="ami-heatmap"></div>
@@ -104,6 +104,20 @@ $(function() {
     </div>
   </div>
 </div>
+
+<div class="row">
+  <div class="col-md-10 col-md-offset-1">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        Event heatmap for {{ meter.meter_id }}
+      </div>
+      <div class="panel-body">
+        <div id="event-heatmap"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <div class="row">
   <div class="col-md-10 col-md-offset-1">
@@ -220,6 +234,7 @@ $(function() {
 
 <script>
 var heatmap_data = {{ ami_heatmap_data|safe}};
+var event_heatmap_data = {{ event_heatmap_data|safe}};
 var recent_data = {{ recent_preview_data|safe }};
 var events_data = {{ events_data|safe }};
 var meas_data = {{ meas_diag_data|safe }};
@@ -261,6 +276,7 @@ config =  {data: [{t: [0],
 
     micropolar.Axis().config(config).render(d3.select('#phasor-graph'));
     heatmap = createHeatMap("#ami-heatmap",heatmap_data,900,400);
+    event_heatmap = createHeatMap("#event-heatmap",event_heatmap_data,900,400);
     createBrushAreaChart("#recent-preview-graph",recent_data,
       events_data,900,550);
 </script>

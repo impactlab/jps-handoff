@@ -65,6 +65,7 @@ def meter_detail(request, id):
 
   context = {'meter': meter, 'groups': MeterGroup.objects,
              'ami_heatmap_data': meter.format_ami_data(fmt='json-grid'),
+             'event_heatmap_data': meter.format_event_data(fmt='json-grid'),
              'recent_preview_data': meter.format_ami_data(fmt='json'),
              'events_data': meter.events_data(),
              'meas_diag_data': meter.meas_diag_data()}

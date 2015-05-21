@@ -31,7 +31,6 @@ class Meter(models.Model):
     raw = [i for i in reversed(self.profile_points.\
            filter(ts__gte=start_date).order_by('-ts'))]
     s = pd.Series([i.kwh for i in raw], index=[i.ts for i in raw])
-    s = s.resample('60T').dropna()
     self.total_usage = int(s.sum())
 
   def __unicode__(self):
@@ -186,15 +185,19 @@ class Meter(models.Model):
           return True
       return False
 
-  def _load_measurement_data_mv90(self):
-    con = pyodbc.connect(servername='mv90', user=os.environ['MV90_USER'],
-      password=os.environ['MV90_PASS'], driver='FreeTDS', database='MR-Auxillary')
-    cur = con.cursor()
-    cur.execute('SELECT TOP 1 * FROM MeterExtras WHERE MeterNumber=? ORDER BY ReadingTime DESC',
-      (self.meter_id,))
-    d = cur.fetchall()
-    if len(d)==0: return
-    d = d[0]
+  def _load_measurement_data_mv90(self, row=None):
+    d = None
+    if row is None:
+      con = pyodbc.connect(servername='mv90', user=os.environ['MV90_USER'],
+        password=os.environ['MV90_PASS'], driver='FreeTDS', database='MR-Auxillary')
+      cur = con.cursor()
+      cur.execute('SELECT TOP 1 * FROM MeterExtras WHERE MeterNumber=? ORDER BY ReadingTime DESC',
+        (self.meter_id,))
+      d = cur.fetchall()
+      if len(d)==0: return
+      d = d[0]
+    else:
+      d = row
     ts = datetime.datetime.strptime(d[3].split('.')[0], '%Y-%m-%d %H:%M:%S')
     tz = pytz.timezone('America/Jamaica')
     tzutc = pytz.timezone('UTC')
@@ -416,11 +419,13 @@ class Meter(models.Model):
                 order_by('-ts'))] 
       return json.dumps(data)
     if fmt=='json-grid':
-      raw = [i for i in reversed(self.profile_points.\
+      raw = [i for i in reversed(self.events.\
              filter(ts__gte=start_date).order_by('-ts'))]
-      s = pd.Series([1 for i in raw], index=[i.ts for i in raw])
+      vals = [0,] + [1 for i in raw] + [0,]
+      idxs = [start_date,] + [i.ts for i in raw] + [tslast,]
+      s = pd.Series(vals, index=idxs)
       s = s.resample('15T', how='sum')
-      s[np.isnan(s)] = 0
+        
       data = [{'date': d.strftime('%Y-%m-%d'), 
                'time': d.strftime('%H:%M'),
                'reading': v} for d,v in \

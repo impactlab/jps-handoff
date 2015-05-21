@@ -1,9 +1,9 @@
 #!/bin/sh
-python ../jps/manage.py shell <<EOF
+python /home/impactlab/jps-handoff/webapp/manage.py shell <<EOF
 import csv
 from viewer import models
 
-with open('predictions.csv','r') as f:
+with open('/data/predictions.csv','r') as f:
   fcsv = csv.reader(f)
   for row in fcsv:
     meter_id = row[0]
