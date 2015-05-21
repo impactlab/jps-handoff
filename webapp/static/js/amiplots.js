@@ -61,7 +61,7 @@ function createHeatMap(id,data,w,h) {
     })
     .style("stroke","none")
     .append("svg:title")
-    .text(function(d) { return d.reading + " kWh"; });
+    .text(function(d) { return d.reading ; });
 
   heatmap.append("g")
     .attr("class", "x axis")
