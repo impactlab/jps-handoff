@@ -404,7 +404,7 @@ class Meter(models.Model):
       s = pd.Series([i.kwh for i in raw], index=[i.ts for i in raw])
       data = [{'date': d.strftime('%Y-%m-%d'), 
                'time': d.strftime('%H:%M'),
-               'reading': v} for d,v in \
+               'reading': v*1000} for d,v in \
                s.resample('15T').dropna().iteritems()]
       return json.dumps(data)
     elif fmt=='csv':

@@ -12,7 +12,7 @@ function createHeatMap(id,data,w,h) {
     return d;
   });
 
-  var margin = {top: 20, right: 10, bottom: 70, left: 40},
+  var margin = {top: 20, right: 100, bottom: 70, left: 40},
     width = w - margin.left - margin.right,
     height = h - margin.top - margin.bottom;
 
@@ -61,7 +61,7 @@ function createHeatMap(id,data,w,h) {
     })
     .style("stroke","none")
     .append("svg:title")
-    .text(function(d) { return d.reading ; });
+    .text(function(d) { return d.reading; });
 
   heatmap.append("g")
     .attr("class", "x axis")
@@ -71,6 +71,17 @@ function createHeatMap(id,data,w,h) {
   heatmap.append("g")
     .attr("class", "y axis")
     .call(yAxis);
+
+  colorbar = Colorbar()
+    .origin([width+margin.left+30,0])
+    .thickness(100)
+    .scale(colorScale).barlength(300).thickness(20)
+    .orient("vertical");
+
+  bar =  heatmap.append("g").attr("id","colorbar");
+  pointer = heatmap.selectAll("#colorbar")
+	.call(colorbar);
+
 }
 
 
@@ -228,7 +239,7 @@ function createBrushAreaChart(id,data,evtdata,w,h) {
     .attr("y", 15)
     .attr("x", -10)
     .attr("transform", "rotate(-90)")
-    .text("Profile (kWh)");
+    .text("Profile (kW)");
 
   context.append("path")
     .datum(data)
